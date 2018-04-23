@@ -34,6 +34,7 @@ Local Const $WONSTATE = "WONSTATE"
 Local Const $LOSTSTATE = "LOSTSTATE"
 Local Const $DRAWSTATE = "DRAWSTATE"
 Local Const $SPILTSTATE = "SPILTSTATE"
+Local Const $SPILTSTATELHS = "SPILTSTATELHS"
 Local Const $DOUBLESTANDSTATE = "DOUBLESTANDSTATE"
 Local Const $DOUBLEHITSTATE = "DOUBLEHITSTATE"
 Local Const $ERRORSTATE = "ERRORSTATE"
@@ -41,20 +42,23 @@ Local Const $DRAWONESTATE = "DRAWONESTATE"
 Local Const $DRAWTWOSTATE = "DRAWTWOSTATE"
 Local Const $DRAWTHREESTATE = "DRAWTHREESTATE"
 Local Const $SURRENDERSTATE = "SURRENDERSTATE"
-
+Local Const $RANDOMIZESEEDSTATE = "RANDOMIZESEEDSTATE"
 
 ; gambling variables
-Local $currentState = $NEWGAMESTATE
+Local $currentState = $INGAMESTATE
 Local $currentLose = 0
 Local $baseBetAmount = 1
 Local $betAmount = 1
-Local $ControlFolderPath = "C:\Users\AntonWin10\Desktop\Blackjack Player\controlimg"
+Local $ControlFolderPath = "C:\Users\AntonWin10\Desktop\blackjack-bot\controlimg"
 Local $CardsDrawn = 0
 
 ; debug variables
 Local $thisErrorState = ""
-Local $DebugFolderPath = "C:\Users\AntonWin10\Desktop\Blackjack Player\debug"
+Local $DebugFolderPath = "C:\Users\AntonWin10\Desktop\blackjack-bot\debug"
 Local $HeartBeatCounter = 0
+Local $currentStateCounter = 0
+Local $previousState = $SPILTSTATE
+Local $gameCounters = 15
 
 ; Local Storage Variables
 Local $playerCard1Image
@@ -90,6 +94,24 @@ While(True)
 	  If ImageCompare(CaptureMacro($NEWGAMESTATE), ControlImage($NEWGAMESTATE)) Then
 		 $currentState = $BETTINGSTATE
 	  EndIf
+
+	  If ($gameCounters > 10) Then
+		 $currentState = $RANDOMIZESEEDSTATE
+	  EndIf
+   ElseIf ($currentState == $RANDOMIZESEEDSTATE) Then
+	  Sleep(1000)
+	  MouseClick("left",303,232)
+	  Sleep(1000)
+	  Local $timesToClick = Random(3,8,1)
+	  For $counter = 1 To $timesToClick Step 1
+		 MouseClick("left",885,501)
+	  Sleep(150)
+	  Next
+	  Sleep(1000)
+	  MouseClick("left",69,229)
+	  Sleep(1000)
+	  $gameCounters = 0
+	  $currentState = $NEWGAMESTATE
    ElseIf ($currentState == $BETTINGSTATE) Then
 	  For $counter = 1 To $betAmount Step 1
 		 ; Place chips on the table
@@ -192,10 +214,13 @@ While(True)
 	  EndIf
    ElseIf ($currentState == $GAMEOVERSTATE) Then
 	  If ImageCompare(CaptureMacro($LOSTSTATE), ControlImage($LOSTSTATE)) Then
+		 $gameCounters += Random(1,3,1)
 		 $currentState = $LOSTSTATE
 	  ElseIf ImageCompare(CaptureMacro($WONSTATE), ControlImage($WONSTATE)) Then
+		 $gameCounters += Random(1,3,1)
 		 $currentState = $WONSTATE
 	  ElseIf ImageCompare(CaptureMacro($DRAWSTATE), ControlImage($DRAWSTATE)) Then
+		 $gameCounters += Random(1,3,1)
 		 $currentState = $DRAWSTATE
 	  EndIf
    ElseIf ($currentState == $LOSTSTATE) Then
@@ -225,6 +250,11 @@ While(True)
 		 $currentState = $GAMEOVERSTATE
 	  EndIf
    ElseIf ($currentState == $SPILTSTATE) Then
+	  If ImageCompare(CaptureMacro($SPILTSTATE), ControlImage($SPILTSTATE)) Then
+		 MouseClick("left", 293, 627) ;  click the spilt button
+		 $currentState = $SPILTSTATELHS
+	  EndIf
+   ElseIf ($currentState == $SPILTSTATELHS) Then
 	  ExitLoop
    ElseIf ($currentState == $ERRORSTATE) Then
 	  MouseMove(10,10)
@@ -233,11 +263,7 @@ While(True)
    EndIf
 WEnd
 
-; starts from 0 like a programmer
-Func CapturePlayerCard($index)
-   Local $spaceBetweenCards = $index * $BetweenCards
-   return Capture(   $StartOfPlayerCardPosX + $spaceBetweenCards,   $StartOfPlayerCardPosY,   ($StartOfPlayerCardPosX + $spaceBetweenCards) + $CardWidth,   $StartOfPlayerCardPosY + $CardHeight)
-EndFunc
+
 
 ; Main function ends - only helper functions left below --------
 ; Configurable Stuffs per PC ------------- Start --------------
@@ -264,6 +290,8 @@ Func CaptureMacro($enumState)
 	  return Capture(309,601,357,681)
    ElseIf ($enumState == $DOUBLESTANDSTATE) Then
 	  return Capture(309,601,357,681)
+   ElseIf ($enumState == $SPILTSTATE) Then
+	  return Capture(253,584,294,636)
    Else
 	  Assert(false, "Invalid Capture Macro Function")
    EndIf
@@ -295,6 +323,8 @@ Func ControlImage($enumState)
 	  Return LoadImgFromFile($FolderPath & "\DOUBLEHITSTATE.png")
    ElseIf ($enumState == $DOUBLESTANDSTATE) Then
 	  Return LoadImgFromFile($FolderPath & "\DOUBLESTANDSTATE.png")
+   ElseIf ($enumState == $SPILTSTATE) Then
+	  Return LoadImgFromFile($FolderPath & "\SPILTSTATE.png")
    Else
 	  Assert(false, "Invalid Control Image")
    EndIf
@@ -305,11 +335,69 @@ EndFunc
 
 ; All Other functions
 Func WhatToDoFirst($player, $dealer)
+
+   If ($dealer == 1) Then
+	  If ($player == 5) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 6) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 7) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 12) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 13) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 14) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 15) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 16) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 17) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+   EndIf
+
+   If ($dealer == 10) Then
+	  If ($player == 14) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 15) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+	  If ($player == 16) Then
+		 Return $SURRENDERSTATE
+	  EndIf
+   EndIf
+
+   If $player == 9 Then
+	  If $dealer == 3 Then
+		 Return $DOUBLEHITSTATE
+	  EndIf
+	  If $dealer == 4 Then
+		 Return $DOUBLEHITSTATE
+	  EndIf
+	  If $dealer == 5 Then
+		 Return $DOUBLEHITSTATE
+	  EndIf
+	  If $dealer == 6 Then
+		 Return $DOUBLEHITSTATE
+	  EndIf
+	  Return $HITSTATE
+   EndIf
+
    If $player == 10 Then
 	  If $dealer == 10 Then
 		 Return $HITSTATE
 	  EndIf
-
 	  If $dealer == 1 Then
 		 Return $HITSTATE
 	  EndIf
@@ -348,6 +436,134 @@ Func WhatToDoFirst($player, $dealer)
    EndIf
 
    Return WhatToDoNormal($player, $dealer)
+EndFunc
+
+Func WhatToDoSpilt($player, $dealer)
+   Local $cardValue = $player / 2
+
+   If $cardValue == 2 Then
+	  If $dealer == 4 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 5 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 6 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 7 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  Return $HITSTATE
+   EndIf
+
+   If $cardValue == 3 Then
+	  If $dealer == 4 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 5 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 6 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 7 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  Return $HITSTATE
+   EndIf
+
+   If $cardValue == 4 Then
+	  Return $HITSTATE
+   EndIf
+
+   If $cardValue == 5 Then
+	  If $dealer == 10 Then
+		 Return $HITSTATE
+	  EndIf
+	  If $dealer == 1 Then
+		 Return $HITSTATE
+	  EndIf
+	  Return $DOUBLEHITSTATE
+   EndIf
+
+   If $cardValue == 6 Then
+	  If $dealer == 3 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 4 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 5 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 6 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  Return $HITSTATE
+   EndIf
+
+   If $cardValue == 7 Then
+	  If $dealer == 2 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 3 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 4 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 5 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 6 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 7 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  Return $HITSTATE
+   EndIf
+
+   If $cardValue == 8 Then
+	  Return $SPILTSTATE
+   EndIf
+
+   If $cardValue == 9 Then
+	  If $dealer == 2 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 3 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 4 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 5 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 6 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 7 Then
+		 Return $STANDSTATE
+	  EndIf
+	  If $dealer == 8 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  If $dealer == 9 Then
+		 Return $SPILTSTATE
+	  EndIf
+	  Return $STANDSTATE
+   EndIf
+
+   If $cardValue == 10 Then
+	  Return $STANDSTATE
+   EndIf
+
+   ; should never happen
+   Assert(false, "Unprogrammed state (Spilt)")
+   return $ERRORSTATE
 EndFunc
 
 Func WhatToDoNormal($player, $dealer)
@@ -423,10 +639,10 @@ Func WhatToDoNormal($player, $dealer)
 
    IF $player == 14 Then
 	  IF $dealer == 2 Then
-		 Return $HITSTATE
+		 Return $STANDSTATE
 	  EndIf
 	  IF $dealer == 3 Then
-		 Return $HITSTATE
+		 Return $STANDSTATE
 	  EndIf
 	  IF $dealer == 4 Then
 		 Return $STANDSTATE
@@ -542,13 +758,14 @@ Func WhatToDoNormal($player, $dealer)
 EndFunc
 
 Func WhatToDoAce($player, $dealer)
+
    Local $othercard = $player - 1
 
-   If $othercard == 1 Then
+   If $othercard == 1 Then ; ace and ace
 	  Return $SPILTSTATE
    EndIf
 
-   If $othercard == 2 Then
+   If $othercard == 2 Then ; ace and 2 = 13
 	  If $dealer == 5 Then
 		 Return $DOUBLEHITSTATE
 	  EndIf
@@ -559,7 +776,7 @@ Func WhatToDoAce($player, $dealer)
 	  Return $HITSTATE
    EndIf
 
-   If $othercard == 3 Then
+   If $othercard == 3 Then ; ace and 3 = 14
 	  If $dealer == 5 Then
 		 Return $DOUBLEHITSTATE
 	  EndIf
@@ -569,7 +786,7 @@ Func WhatToDoAce($player, $dealer)
 	  Return $HITSTATE
    EndIf
 
-   If $othercard == 4 Then
+   If $othercard == 4 Then ; ace and 5 = 15
 	  If $dealer == 4 Then
 		 Return $DOUBLEHITSTATE
 	  EndIf
@@ -582,7 +799,7 @@ Func WhatToDoAce($player, $dealer)
 	  Return $HITSTATE
    EndIf
 
-   If $othercard == 5 Then
+   If $othercard == 5 Then ; ace and 5 = 16
 	  If $dealer == 4 Then
 		 Return $DOUBLEHITSTATE
 	  EndIf
@@ -599,19 +816,19 @@ Func WhatToDoAce($player, $dealer)
 	  If $dealer == 3 Then
 		 Return $DOUBLEHITSTATE
 	  EndIf
-	  	  If $dealer == 4 Then
+	  If $dealer == 4 Then
 		 Return $DOUBLEHITSTATE
 	  EndIf
-	  	  If $dealer == 5 Then
+	  If $dealer == 5 Then
 		 Return $DOUBLEHITSTATE
 	  EndIf
-	  	  If $dealer == 6 Then
+	  If $dealer == 6 Then
 		 Return $DOUBLEHITSTATE
 	  EndIf
 	  Return $HITSTATE
    EndIf
 
-   If $othercard == 7 Then
+   If $othercard == 7 Then ; ace and 7 = 18
 	  If $dealer == 7 Then
 		 Return $STANDSTATE
 	  EndIf
@@ -627,19 +844,21 @@ Func WhatToDoAce($player, $dealer)
 	  If $dealer == 1 Then
 		 Return $HITSTATE
 	  EndIf
-	  Return $DOUBLEHITSTATE
+	  Return $DOUBLESTANDSTATE
    EndIf
 
    If $othercard == 8 Then
 	  If $dealer == 6 Then
-		 Return $DOUBLEHITSTATE
+		 Return $DOUBLESTANDSTATE
 	  EndIf
 	  Return $STANDSTATE
    EndIf
 
-   If $othercard == 9 Then
+   If $othercard == 9 Then ; ace and 9 = 20
 	  Return $STANDSTATE
    EndIf
+
+   Return $ERRORSTATE ; should never happen
 EndFunc
 
 Func CompareCards($card1, $card2, $dealercard)
@@ -678,10 +897,8 @@ Func CompareCards($card1, $card2, $dealercard)
 
    If $spiltable Then
 	  ; dont' need to handle double aces here..
-	  ; TODO: Spilt Logic
-	  Return WhatToDoFirst($card1IntValue + $card2IntValue, $dealerValue)
-	  ; Return $SPILTSTATE
-	  EndIf
+	  Return WhatToDoSpilt($card1IntValue + $card2IntValue , $dealerValue)
+   EndIf
 
    Return $ERRORSTATE
 EndFunc
@@ -690,7 +907,7 @@ Func Assert($condition, $msg)
    If ($condition == False) Then
 	  $thisErrorState = $msg
 	  ConsoleWrite($msg);
-	  Sleep(1000000)
+	  Sleep(99999999)
    EndIf
 EndFunc
 
@@ -800,9 +1017,22 @@ Func ValueOfCard($stringCard)
    Assert(false, "Should never happen: "  & $stringCard)
 EndFunc
 
+
 Func Heartbeat()
    Sleep(1000)
    $HeartBeatCounter += 1
+
+   If ($previousState == $currentState) Then
+	  $currentStateCounter += 1
+   Else
+	  $currentStateCounter = 0
+   EndIf
+
+   If ($currentStateCounter > 5) Then
+	  $currentState = $ERRORSTATE
+	  Assert(false, "Spent Too Long in this state!")
+   EndIf
+
    Return $HeartBeatCounter
 EndFunc
 
@@ -967,6 +1197,12 @@ Func CleanupCardNoise($gdi_img)
 	  Next
    Next
 
+EndFunc
+
+; starts from 0 like a programmer
+Func CapturePlayerCard($index)
+   Local $spaceBetweenCards = $index * $BetweenCards
+   return Capture(   $StartOfPlayerCardPosX + $spaceBetweenCards,   $StartOfPlayerCardPosY,   ($StartOfPlayerCardPosX + $spaceBetweenCards) + $CardWidth,   $StartOfPlayerCardPosY + $CardHeight)
 EndFunc
 
 Func GetValueOfCard($gdi_img, $imgName)
